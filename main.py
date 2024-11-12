@@ -26,6 +26,7 @@ from fasthtml.common import (
     Form,
     Main,
     picolink,
+    Label,
 )
 import yaml
 import os
