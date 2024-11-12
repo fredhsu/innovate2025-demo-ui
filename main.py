@@ -102,7 +102,10 @@ def save_yaml(entry: VNIEntry):
     }
     
     # Add the new entry to the first tenant's l2vlans
-    tenants_data['tenants'][0]['l2vlans'].append(new_l2vlan)
+    for tenant in tenants_data['tenants']:
+        if tenant['name'] == 'Tenant_A':
+            tenant['l2vlans'].append(new_l2vlan)
+            break
     
     # Write updated YAML file
     with open("TENANTS.yaml", 'w') as f:
