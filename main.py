@@ -29,6 +29,10 @@ from fasthtml.common import (
     Label,
     Select,
     Option,
+    Table,
+    Tr,
+    Th,
+    Td,
 )
 import yaml
 import os
@@ -51,22 +55,6 @@ def home():
     return page
 
 
-@app.get("/page2")
-def page2():
-    return Main(
-        P("Add a message with the form below:"),
-        Form(
-            Input(type="text", name="data"), Button("Submit"), action="/", method="post"
-        ),
-    )
-
-
-@app.post("/")
-def add_message(data: str):
-    messages.append(data)
-    return home()
-
-
 @dataclass
 class SVIEntry:
     id: str
@@ -81,15 +69,15 @@ def yaml_form():
     # Read the existing YAML file to get VRF names
     with open("TENANTS.yaml", "r") as f:
         tenants_data = yaml.safe_load(f)
-    
+
     # Extract VRF names from the first tenant
     vrf_names = [
-        vrf["name"] 
-        for tenant in tenants_data.get("tenants", []) 
+        vrf["name"]
+        for tenant in tenants_data.get("tenants", [])
         for vrf in tenant.get("vrfs", [])
     ]
 
-    return Main(
+    add = (
         H1("SVI Entry Form"),
         Form(
             Div(
@@ -101,20 +89,45 @@ def yaml_form():
                     placeholder="IP Address Virtual",
                     required=True,
                 ),
-                Label("Select VRF:", 
+                Label(
+                    "Select VRF:",
                     Div(
                         Select(
                             *[Option(vrf, value=vrf) for vrf in vrf_names],
                             name="vrf_name",
-                            required=True
+                            required=True,
                         )
-                    )
+                    ),
                 ),
             ),
             Button("Submit", type="submit"),
             action="/save-svi-yaml",
             method="post",
         ),
+    )
+
+    show = (
+        H1("Currently configured SVIs"),
+        Table(
+            (
+                Tr(
+                    Th("ID"),
+                    Th("Name"),
+                    Th("IP Address Virtual"),
+                    Th("VRF Name"),
+                ),
+                Tr(
+                    Td("id"),
+                    Td("name"),
+                    Td("ip_address_virtual"),
+                    Td("vrf_name"),
+                ),
+            )
+        ),
+    )
+    return Main(
+        add,
+        show,
     )
 
 
@@ -126,6 +139,7 @@ class SVIEntry:
     vrf_name: str
     tags: str = ""
     enabled: bool = True
+
 
 @app.post("/save-svi-yaml")
 def save_svi_yaml(entry: SVIEntry):
