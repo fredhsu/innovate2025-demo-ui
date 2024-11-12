@@ -71,6 +71,13 @@ class VNIEntry:
     name: str
     tags: str
 
+@dataclass
+class SVIEntry:
+    id: str
+    name: str
+    ip_address_virtual: str
+    tags: str
+    enabled: bool = True
 
 @app.get("/yaml-form")
 def yaml_form():
@@ -95,6 +102,20 @@ def yaml_form():
             ),
             Button("Submit", type="submit"),
             action="/save-yaml",
+            method="post",
+        ),
+        H1("SVI Entry Form"),
+        Form(
+            Div(
+                Input(type="text", name="id", placeholder="SVI ID", required=True),
+                Input(type="text", name="name", placeholder="SVI Name", required=True),
+                Input(type="text", name="ip_address_virtual", placeholder="IP Address Virtual", required=True),
+                Input(type="text", name="tags", placeholder="Tags (comma-separated)", required=True),
+                Input(type="checkbox", name="enabled", checked=True, value="true"),
+                Label("Enabled", for_="enabled"),
+            ),
+            Button("Submit", type="submit"),
+            action="/save-svi-yaml",
             method="post",
         ),
     )
@@ -125,12 +146,43 @@ def save_yaml(entry: VNIEntry):
     pp.pprint(tenants_data)
     print(yaml.dump(tenants_data))
     with open("TENANTS.yaml", "w") as f:
-        yaml.dump(tenants_data, f)
+        yaml.dump(tenants_data, f, default_flow_style=False)
 
     return Main(
         H1("YAML File Updated"),
         P(f"Entry for {entry.name} has been added to TENANTS.yaml"),
     )
 
+@app.post("/save-svi-yaml")
+def save_svi_yaml(entry: SVIEntry):
+    # Read the existing YAML file
+    with open("TENANTS.yaml", "r") as f:
+        tenants_data = yaml.safe_load(f)
+
+    # Prepare the new SVI entry
+    new_svi = {
+        "id": int(entry.id),
+        "name": entry.name,
+        "ip_address_virtual": entry.ip_address_virtual,
+        "tags": entry.tags.split(","),  # Convert comma-separated string to list
+        "enabled": entry.enabled
+    }
+
+    # Add the new entry to the first tenant's vrfs
+    for tenant in tenants_data["tenants"]:
+        if tenant["name"] == "Tenant_A":
+            for vrf in tenant.get("vrfs", []):
+                if vrf["name"] == "Tenant_A_OP_Zone":
+                    vrf.setdefault("svis", []).append(new_svi)
+                    break
+
+    # Write updated YAML file
+    with open("TENANTS.yaml", "w") as f:
+        yaml.dump(tenants_data, f, default_flow_style=False)
+
+    return Main(
+        H1("YAML File Updated"),
+        P(f"SVI entry for {entry.name} has been added to TENANTS.yaml"),
+    )
 
 serve()
