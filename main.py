@@ -27,6 +27,8 @@ from fasthtml.common import (
     Main,
     picolink,
     Label,
+    Select,
+    Option,
 )
 import yaml
 import os
@@ -76,6 +78,17 @@ class SVIEntry:
 
 @app.get("/yaml-form")
 def yaml_form():
+    # Read the existing YAML file to get VRF names
+    with open("TENANTS.yaml", "r") as f:
+        tenants_data = yaml.safe_load(f)
+    
+    # Extract VRF names from the first tenant
+    vrf_names = [
+        vrf["name"] 
+        for tenant in tenants_data.get("tenants", []) 
+        for vrf in tenant.get("vrfs", [])
+    ]
+
     return Main(
         H1("SVI Entry Form"),
         Form(
@@ -88,12 +101,15 @@ def yaml_form():
                     placeholder="IP Address Virtual",
                     required=True,
                 ),
-                # Input(
-                #     type="text",
-                #     name="tags",
-                #     placeholder="Tags (comma-separated)",
-                #     required=True,
-                # ),
+                Label("Select VRF:", 
+                    Div(
+                        Select(
+                            *[Option(vrf, value=vrf) for vrf in vrf_names],
+                            name="vrf_name",
+                            required=True
+                        )
+                    )
+                ),
             ),
             Button("Submit", type="submit"),
             action="/save-svi-yaml",
@@ -101,6 +117,15 @@ def yaml_form():
         ),
     )
 
+
+@dataclass
+class SVIEntry:
+    id: str
+    name: str
+    ip_address_virtual: str
+    vrf_name: str
+    tags: str = ""
+    enabled: bool = True
 
 @app.post("/save-svi-yaml")
 def save_svi_yaml(entry: SVIEntry):
@@ -117,13 +142,12 @@ def save_svi_yaml(entry: SVIEntry):
         "enabled": True,
     }
 
-    # Add the new entry to the first tenant's vrfs
+    # Add the new entry to the specified VRF
     for tenant in tenants_data["tenants"]:
-        if tenant["name"] == "Tenant_A":
-            for vrf in tenant.get("vrfs", []):
-                if vrf["name"] == "Tenant_A_OP_Zone":
-                    vrf.setdefault("svis", []).append(new_svi)
-                    break
+        for vrf in tenant.get("vrfs", []):
+            if vrf["name"] == entry.vrf_name:
+                vrf.setdefault("svis", []).append(new_svi)
+                break
 
     # Write updated YAML file
     with open("TENANTS.yaml", "w") as f:
@@ -131,7 +155,7 @@ def save_svi_yaml(entry: SVIEntry):
 
     return Main(
         H1("YAML File Updated"),
-        P(f"SVI entry for {entry.name} has been added to TENANTS.yaml"),
+        P(f"SVI entry for {entry.name} has been added to {entry.vrf_name}"),
     )
 
 
