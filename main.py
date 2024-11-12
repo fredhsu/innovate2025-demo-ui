@@ -89,27 +89,28 @@ def yaml_form():
 
 @app.post("/save-yaml")
 def save_yaml(entry: VNIEntry):
-    # Create a directory to store YAML files if it doesn't exist
-    os.makedirs("vni_entries", exist_ok=True)
+    # Read the existing YAML file
+    with open("TENANTS.yaml", 'r') as f:
+        tenants_data = yaml.safe_load(f)
     
-    # Prepare the data dictionary
-    data = {
-        "id": entry.id,
-        "vni_override": entry.vni_override,
+    # Prepare the new L2 VLAN entry
+    new_l2vlan = {
+        "id": int(entry.id),
+        "vni_override": int(entry.vni_override),
         "name": entry.name,
         "tags": entry.tags.split(",")  # Convert comma-separated string to list
     }
     
-    # Generate filename based on ID
-    filename = f"vni_entries/{entry.id}.yaml"
+    # Add the new entry to the first tenant's l2vlans
+    tenants_data['tenants'][0]['l2vlans'].append(new_l2vlan)
     
-    # Write YAML file
-    with open(filename, 'w') as f:
-        yaml.dump(data, f, default_flow_style=False)
+    # Write updated YAML file
+    with open("TENANTS.yaml", 'w') as f:
+        yaml.dump(tenants_data, f, default_flow_style=False)
     
     return Main(
-        H1("YAML File Saved"),
-        P(f"Entry for {entry.name} has been saved to {filename}")
+        H1("YAML File Updated"),
+        P(f"Entry for {entry.name} has been added to TENANTS.yaml")
     )
 
 serve()

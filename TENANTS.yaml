@@ -20,3 +20,7 @@ tenants:
         vni_override: 55160
         name: Tenant_A_VMOTION
         tags: [vmotion]
+      - id: "{entry.id}"
+        vni_override: "{entry.vni_override}"
+        name: "{entry.name}"
+        tags: ["{entry.tags}"]
