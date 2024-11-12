@@ -1,3 +1,4 @@
+import pprint
 from fasthtml.common import (
     FastHTML,
     serve,
@@ -70,6 +71,7 @@ class VNIEntry:
     name: str
     tags: str
 
+
 @app.get("/yaml-form")
 def yaml_form():
     return Main(
@@ -77,43 +79,58 @@ def yaml_form():
         Form(
             Div(
                 Input(type="text", name="id", placeholder="ID", required=True),
-                Input(type="text", name="vni_override", placeholder="VNI Override", required=True),
+                Input(
+                    type="text",
+                    name="vni_override",
+                    placeholder="VNI Override",
+                    required=True,
+                ),
                 Input(type="text", name="name", placeholder="Name", required=True),
-                Input(type="text", name="tags", placeholder="Tags (comma-separated)", required=True),
+                Input(
+                    type="text",
+                    name="tags",
+                    placeholder="Tags (comma-separated)",
+                    required=True,
+                ),
             ),
             Button("Submit", type="submit"),
-            action="/save-yaml", 
-            method="post"
-        )
+            action="/save-yaml",
+            method="post",
+        ),
     )
+
 
 @app.post("/save-yaml")
 def save_yaml(entry: VNIEntry):
     # Read the existing YAML file
-    with open("TENANTS.yaml", 'r') as f:
+    with open("TENANTS.yaml", "r") as f:
         tenants_data = yaml.safe_load(f)
-    
+
     # Prepare the new L2 VLAN entry
     new_l2vlan = {
         "id": int(entry.id),
         "vni_override": int(entry.vni_override),
         "name": entry.name,
-        "tags": entry.tags.split(",")  # Convert comma-separated string to list
+        "tags": entry.tags.split(","),  # Convert comma-separated string to list
     }
-    
+
     # Add the new entry to the first tenant's l2vlans
-    for tenant in tenants_data['tenants']:
-        if tenant['name'] == 'Tenant_A':
-            tenant['l2vlans'].append(new_l2vlan)
+    for tenant in tenants_data["tenants"]:
+        if tenant["name"] == "Tenant_A":
+            tenant["l2vlans"].append(new_l2vlan)
             break
-    
+
     # Write updated YAML file
-    with open("TENANTS.yaml", 'w') as f:
-        yaml.dump(tenants_data, f, default_flow_style=False)
-    
+    pp = pprint.PrettyPrinter(indent=4)
+    pp.pprint(tenants_data)
+    print(yaml.dump(tenants_data))
+    with open("TENANTS.yaml", "w") as f:
+        yaml.dump(tenants_data, f)
+
     return Main(
         H1("YAML File Updated"),
-        P(f"Entry for {entry.name} has been added to TENANTS.yaml")
+        P(f"Entry for {entry.name} has been added to TENANTS.yaml"),
     )
+
 
 serve()
