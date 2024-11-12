@@ -26,6 +26,9 @@ from fasthtml.common import (
     Main,
     picolink,
 )
+import yaml
+import os
+from dataclasses import dataclass
 
 
 app = FastHTML(hdrs=picolink)
@@ -59,5 +62,54 @@ def add_message(data: str):
     messages.append(data)
     return home()
 
+
+@dataclass
+class VNIEntry:
+    id: str
+    vni: str
+    name: str
+    tags: str
+
+@app.get("/yaml-form")
+def yaml_form():
+    return Main(
+        H1("VNI Entry Form"),
+        Form(
+            Div(
+                Input(type="text", name="id", placeholder="ID", required=True),
+                Input(type="text", name="vni", placeholder="VNI", required=True),
+                Input(type="text", name="name", placeholder="Name", required=True),
+                Input(type="text", name="tags", placeholder="Tags (comma-separated)", required=True),
+            ),
+            Button("Submit", type="submit"),
+            action="/save-yaml", 
+            method="post"
+        )
+    )
+
+@app.post("/save-yaml")
+def save_yaml(entry: VNIEntry):
+    # Create a directory to store YAML files if it doesn't exist
+    os.makedirs("vni_entries", exist_ok=True)
+    
+    # Prepare the data dictionary
+    data = {
+        "id": entry.id,
+        "vni": entry.vni,
+        "name": entry.name,
+        "tags": entry.tags.split(",")  # Convert comma-separated string to list
+    }
+    
+    # Generate filename based on ID
+    filename = f"vni_entries/{entry.id}.yaml"
+    
+    # Write YAML file
+    with open(filename, 'w') as f:
+        yaml.dump(data, f, default_flow_style=False)
+    
+    return Main(
+        H1("YAML File Saved"),
+        P(f"Entry for {entry.name} has been saved to {filename}")
+    )
 
 serve()
