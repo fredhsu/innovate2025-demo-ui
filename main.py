@@ -66,7 +66,7 @@ def add_message(data: str):
 @dataclass
 class VNIEntry:
     id: str
-    vni: str
+    vni_override: str
     name: str
     tags: str
 
@@ -77,7 +77,7 @@ def yaml_form():
         Form(
             Div(
                 Input(type="text", name="id", placeholder="ID", required=True),
-                Input(type="text", name="vni", placeholder="VNI", required=True),
+                Input(type="text", name="vni_override", placeholder="VNI Override", required=True),
                 Input(type="text", name="name", placeholder="Name", required=True),
                 Input(type="text", name="tags", placeholder="Tags (comma-separated)", required=True),
             ),
@@ -95,7 +95,7 @@ def save_yaml(entry: VNIEntry):
     # Prepare the data dictionary
     data = {
         "id": entry.id,
-        "vni": entry.vni,
+        "vni_override": entry.vni_override,
         "name": entry.name,
         "tags": entry.tags.split(",")  # Convert comma-separated string to list
     }
