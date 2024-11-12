@@ -1,7 +1,0 @@
-id: '100'
-name: foo
-tags:
-- one
-- ' two'
-- ' three'
-vni_override: '55100'
