@@ -4,6 +4,7 @@ from fasthtml.common import (
     FastHTML,
     serve,
     Card,
+    FileResponse,
     P,
     Title,
     Body,
@@ -31,23 +32,28 @@ from dataclasses import dataclass
 # app = FastHTML(pico=False, hdrs=(ShadHead(tw_cdn=True),))
 app = FastHTML(
     hdrs=(
-        # Link(href="css/output.css", rel="stylesheet"),
+        Link(href="/css/output.css", rel="stylesheet"),
         # Link(
         #     rel="stylesheet",
         #     href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css",
         # ),
         # Script(src="https://cdn.tailwindcss.com"),
-        Script(
-            src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio,line-clamp,container-queries"
-        ),
-        # Link(
-        #     rel="stylesheet",
-        #     href="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.css",
+        # Script(
+        #     src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio,line-clamp,container-queries"
         # ),
+        Link(
+            rel="stylesheet",
+            href="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.css",
+        ),
     ),
     pico=False,
 )
 rt = app.route
+
+
+@app.get("/css/output.css")
+def css():
+    return FileResponse("output.css")
 
 
 @app.get("/")
@@ -145,6 +151,11 @@ def vrf_input(vrf_names, **kw):
     )
 
 
+@app.get("/test")
+def test():
+    return Title("Test"), Body(H1("Test"), Card("Hello world"))
+
+
 @app.get("/yaml-form")
 def yaml_form():
     # Read the existing YAML file to get VRF names
@@ -180,7 +191,7 @@ def yaml_form():
     svis = first_vrf.get("svis")
     vrf_name = first_vrf.get("name", "VRF-A")
     for svi in svis:
-        svi['vrf_name'] = vrf_name
+        svi["vrf_name"] = vrf_name
 
     content = Div(
         *[
@@ -191,13 +202,16 @@ def yaml_form():
                     Span("IP: ", cls="font-bold"),
                     Span(str(svi.get("ip_address_virtual"))),
                 ),
-                Div(Span("VRF: ", cls="font-bold"), Span(str(svi.get('vrf_name', 'VRF-A')))),
+                Div(
+                    Span("VRF: ", cls="font-bold"),
+                    Span(str(svi.get("vrf_name", "VRF-A"))),
+                ),
                 Button(
-                    "Delete", 
-                    hx_delete=f"/delete-svi/{svi.get('id')}/{svi.get('vrf_name', 'VRF-A')}", 
+                    "Delete",
+                    hx_delete=f"/delete-svi/{svi.get('id')}/{svi.get('vrf_name', 'VRF-A')}",
                     hx_target="closest .card",
                     hx_swap="outerHTML",
-                    cls="mt-2 text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700 focus:outline-none dark:focus:ring-red-800"
+                    cls="mt-2 text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700 focus:outline-none dark:focus:ring-red-800",
                 ),
                 cls="card block max-w-sm p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 text-gray-700",
             )
@@ -264,11 +278,11 @@ def save_svi_yaml(entry: SVIEntry):
         ),
         Div(Span("VRF: ", cls="font-bold"), Span(entry.vrf_name)),
         Button(
-            "Delete", 
-            hx_delete=f"/delete-svi/{entry.id}/{entry.vrf_name}", 
+            "Delete",
+            hx_delete=f"/delete-svi/{entry.id}/{entry.vrf_name}",
             hx_target="closest .card",
             hx_swap="outerHTML",
-            cls="mt-2 text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700 focus:outline-none dark:focus:ring-red-800"
+            cls="mt-2 text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700 focus:outline-none dark:focus:ring-red-800",
         ),
         cls="card block max-w-sm p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 text-gray-700",
     )
@@ -296,4 +310,5 @@ def delete_svi(id: int, vrf_name: str):
     return ""
 
 
+app.static_route("/css", static_path="./css")
 serve()
