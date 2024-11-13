@@ -167,12 +167,11 @@ def yaml_form():
             Button(
                 "Add",
                 type="submit",
+                hx_post="/save-svi-yaml",
+                hx_target="#svi-list",
+                hx_swap="beforeend",
                 cls="my-2 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800",
-                # TODO: use hx_post instead
             ),
-            # cls="px-4 space-y-3",
-            action="/save-svi-yaml",
-            method="post",
             cls="max-w-sm mx-auto",
         ),
         cls=("space-y-4 bg-white p-6 rounded-lg shadow",),
@@ -211,7 +210,6 @@ def yaml_form():
         Section(
             add,
             show,
-            # cls= "max-w-sm p-6 bg-white border border-gray-200 rounded-lg shadow",
         ),
         Script(src="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.js"),
         cls="flex flex-col min-h-screen items-center gap-10 p-4",
@@ -229,7 +227,6 @@ def save_svi_yaml(entry: SVIEntry):
         "id": int(entry.id),
         "name": entry.name,
         "ip_address_virtual": entry.ip_address_virtual,
-        # "tags": entry.tags.split(","),  # Convert comma-separated string to list
         "enabled": True,
     }
 
@@ -237,24 +234,23 @@ def save_svi_yaml(entry: SVIEntry):
     for tenant in tenants_data["tenants"]:
         for vrf in tenant.get("vrfs", []):
             if vrf["name"] == entry.vrf_name:
-                print("adding to {entry.vrf_name}")
+                print(f"adding to {entry.vrf_name}")
                 vrf.setdefault("svis", []).append(new_svi)
                 break
 
-    print(yaml.dump(tenants_data))
     # Write updated YAML file
     with open("TENANTS.yaml", "w") as f:
         yaml.dump(tenants_data, f, default_flow_style=False)
 
-    return Main(
-        Body(
-            H1("text-2xl font-bold mb-4 text-green-700", "YAML File Updated"),
-            P(
-                "text-gray-600",
-                f"SVI entry for {entry.name} has been added to {entry.name}",
-            ),
+    # Return an HTML fragment for HTMX to insert
+    return Card(
+        Div(Span("VLAN ID: ", cls="font-bold"), Span(str(entry.id))),
+        Div(Span("Name: ", cls="font-bold"), Span(entry.name)),
+        Div(
+            Span("IP: ", cls="font-bold"),
+            Span(entry.ip_address_virtual),
         ),
-        cls="container mx-auto px-4 py-8",
+        cls="block max-w-sm p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 text-gray-700",
     )
 
 
