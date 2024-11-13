@@ -33,6 +33,10 @@ tenants:
       id: 200
       ip_address_virtual: 10.3.10.1/24
       name: foo
+    - enabled: true
+      id: 300
+      ip_address_virtual: 10.4.10.1/24
+      name: bar
     vrf_vni: 10
     vtep_diagnostic:
       loopback: 100

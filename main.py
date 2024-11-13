@@ -1,37 +1,25 @@
 import pprint
+
+# from shad4fast import *
+# from lucide_fasthtml import Lucide
 from fasthtml.common import (
     FastHTML,
     serve,
-    Html,
+    Card,
     P,
-    Head,
     Title,
     Body,
     Button,
     Input,
     Div,
     H1,
-    H2,
-    H3,
-    H4,
-    H5,
-    H6,
-    Ul,
-    Li,
-    A,
-    Hr,
-    Br,
-    P,
     Img,
     Form,
     Main,
     Label,
     Select,
-    Option,
-    Table,
-    Tr,
-    Th,
-    Td,
+    Link,
+    Section,
     Script,
 )
 import yaml
@@ -39,21 +27,28 @@ import os
 from dataclasses import dataclass
 
 
-app = FastHTML(hdrs=(
-    Script(src="https://cdn.tailwindcss.com"),
-))
+# app = FastHTML(pico=False, hdrs=(ShadHead(theme_handle=True, tw_cdn=True),))
+# app = FastHTML(pico=True)
+# app = FastHTML(pico=False, hdrs=(ShadHead(tw_cdn=True),))
+app = FastHTML(
+    hdrs=(
+        Link(
+            rel="stylesheet",
+            href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css",
+        ),
+        Link(
+            rel="stylesheet",
+            href="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.css",
+        ),
+    ),
+    pico=False,
+)
 rt = app.route
-
-messages = ["This is a message, which will get rendered as a paragraph"]
 
 
 @app.get("/")
 def home():
-    page = Main(
-        H1("text-2xl font-bold mb-4 text-gray-800", "Messages"),
-        *[P("text-gray-600", msg) for msg in messages],
-        A("text-blue-500 hover:underline", "Link to Page 2 (to add messages)", href="/page2"),
-    )
+    page = Main()
     return page
 
 
@@ -64,6 +59,74 @@ class SVIEntry:
     ip_address_virtual: str
     tags: str = ""
     enabled: bool = True
+
+
+def svd_id_input(id=None, **kwargs):
+    return Div(
+        Label("SVI ID:", htmlFor=id),
+        Input(
+            name="svi_id",
+            placeholder="SVI ID",
+            required=True,
+            id=id,
+        ),
+        # cls="space-y-1",
+        id="svi_id_block",
+        **kwargs,
+    )
+
+
+def svd_name_input(id=None, **kwargs):
+    return Div(
+        Label("SVI Name:", htmlFor=id),
+        Input(
+            name="svi_name",
+            placeholder="name",
+            required=True,
+            id=id,
+        ),
+        # cls="space-y-1",
+        id="svi_name_block",
+        **kwargs,
+    )
+
+
+def ip_address_virtual_input(id=None, **kwargs):
+    return Div(
+        Label("IP Address Virtual:", htmlFor=id),
+        Input(
+            name="ip_address_virtual",
+            placeholder="1.1.1.1/24",
+            required=True,
+            id=id,
+        ),
+        # cls="space-y-1",
+        id="ip_address_virtual_block",
+        **kwargs,
+    )
+
+
+def vrf_input(vrf_names, **kw):
+    vrfs = [vrf for vrf in vrf_names]
+    print(vrf_names)
+
+    # TODO: use go back to using a starred list comprehension
+    return Div(
+        Label(
+            "Select VRF",
+            Select(
+                label="VRF",
+                placeholder="VRF",
+                name="vrf_name",
+                items=["low, medium, high"],
+                id="vrf-select",
+                # cls="mt-1,",
+                default_value=vrfs[0],
+            ),
+        ),
+        id="vrf-input-block",
+        **kw,
+    )
 
 
 @app.get("/yaml-form")
@@ -79,92 +142,59 @@ def yaml_form():
         for vrf in tenant.get("vrfs", [])
     ]
 
-    add = (
-        H1("text-2xl font-bold mb-6 text-gray-800", "SVI Entry Form"),
+    add = Card(
         Form(
-            "space-y-4 bg-white p-6 rounded-lg shadow-md",
-            Div(
-                "grid grid-cols-1 gap-4",
-                Input(
-                    "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500",
-                    type="text", 
-                    name="id", 
-                    placeholder="SVI ID", 
-                    required=True
-                ),
-                Input(
-                    "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500",
-                    type="text", 
-                    name="name", 
-                    placeholder="SVI Name", 
-                    required=True
-                ),
-                Input(
-                    "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500",
-                    type="text",
-                    name="ip_address_virtual",
-                    placeholder="IP Address Virtual",
-                    required=True,
-                ),
-                Label(
-                    "block text-sm font-medium text-gray-700 mb-2",
-                    "Select VRF:",
-                    Div(
-                        "mt-1",
-                        Select(
-                            "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500",
-                            *[Option(vrf, value=vrf) for vrf in vrf_names],
-                            name="vrf_name",
-                            required=True,
-                        )
-                    ),
-                ),
-            ),
+            svd_id_input(id="new-svi-id"),
+            ip_address_virtual_input(id="new-ip-address-virtual"),
+            svd_name_input(id="new-svi-name"),
+            vrf_input(vrf_names=vrf_names),
             Button(
-                "w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50",
-                "Submit", 
-                type="submit"
+                "Add",
+                type="submit",
+                # cls="w-full !mt-6",
+                # TODO: use hx_post instead
             ),
+            # cls="px-4 space-y-3",
             action="/save-svi-yaml",
             method="post",
         ),
+        # cls="w-full",
+        # title="title",
     )
+    # cls="space-y-4 bg-white p-6 rounded-lg shadow-md",
+    svis = tenants_data.get("tenants")[0].get("vrfs")[0].get("svis")
 
-    show = (
-        H1("text-2xl font-bold mb-6 text-gray-800", "Currently configured SVIs"),
-        Table(
-            "w-full border-collapse border border-gray-300",
-            Tr(
-                "bg-gray-100",
-                Th("border border-gray-300 px-4 py-2", "ID"),
-                Th("border border-gray-300 px-4 py-2", "Name"),
-                Th("border border-gray-300 px-4 py-2", "IP Address Virtual"),
-                Th("border border-gray-300 px-4 py-2", "VRF Name"),
-            ),
-            Tr(
-                "hover:bg-gray-50",
-                Td("border border-gray-300 px-4 py-2", "id"),
-                Td("border border-gray-300 px-4 py-2", "name"),
-                Td("border border-gray-300 px-4 py-2", "ip_address_virtual"),
-                Td("border border-gray-300 px-4 py-2", "vrf_name"),
+    content = Div(
+        *[
+            Card(
+                P(svi.get("id")),
+                title=(svi.get("name")),
             )
+            for svi in svis
+        ],
+        id="svi-list",
+        # cls="grid sm:grid-cols-2 auto-rows-fr gap-3 w-full",
+    )
+    show = Div(
+        H1(
+            "SVI List",
+            # cls="text-4xl tracking-tighter font-semibold mt-10 text-center",
         ),
+        content,
+        # cls="container max-w-4xl flex flex-col gap-4 items-center",
     )
-    return Main(
-        "container mx-auto px-4 py-8",
-        add,
-        show,
+    return Title("Innovate 2025 Demo"), Body(
+        H1(
+            "Innovate 2025 Demo",
+            # cls="text-4xl tracking-tighter font-semibold mt-10 text-center",
+        ),
+        Section(
+            add,
+            show,
+        ),
+        Script(src="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.js"),
+        # cls="flex flex-col min-h-screen items-center gap-10 p-4",
     )
-
-
-@dataclass
-class SVIEntry:
-    id: str
-    name: str
-    ip_address_virtual: str
-    vrf_name: str
-    tags: str = ""
-    enabled: bool = True
 
 
 @app.post("/save-svi-yaml")
@@ -194,9 +224,17 @@ def save_svi_yaml(entry: SVIEntry):
         yaml.dump(tenants_data, f, default_flow_style=False)
 
     return Main(
-        "container mx-auto px-4 py-8",
-        H1("text-2xl font-bold mb-4 text-green-700", "YAML File Updated"),
-        P("text-gray-600", f"SVI entry for {entry.name} has been added to {entry.vrf_name}"),
+        Body(
+            H1("text-2xl font-bold mb-4 text-green-700", "YAML File Updated"),
+            P(
+                "text-gray-600",
+                f"SVI entry for {entry.name} has been added to {entry.vrf_name}",
+            ),
+            Script(
+                src="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.js"
+            ),
+        ),
+        cls="container mx-auto px-4 py-8",
     )
 
 
