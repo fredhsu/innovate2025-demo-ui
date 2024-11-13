@@ -187,7 +187,14 @@ def yaml_form():
                     Span("IP: ", cls="font-bold"),
                     Span(str(svi.get("ip_address_virtual"))),
                 ),
-                cls="block max-w-sm p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 text-gray-700",
+                Button(
+                    "Delete", 
+                    hx_delete=f"/delete-svi/{svi.get('id')}/{svi.get('vrf_name', 'VRF-A')}", 
+                    hx_target="closest .card",
+                    hx_swap="outerHTML",
+                    cls="mt-2 text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700 focus:outline-none dark:focus:ring-red-800"
+                ),
+                cls="card block max-w-sm p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 text-gray-700",
             )
             for svi in svis
         ],
@@ -250,8 +257,37 @@ def save_svi_yaml(entry: SVIEntry):
             Span("IP: ", cls="font-bold"),
             Span(entry.ip_address_virtual),
         ),
-        cls="block max-w-sm p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 text-gray-700",
+        Button(
+            "Delete", 
+            hx_delete=f"/delete-svi/{entry.id}/{entry.vrf_name}", 
+            hx_target="closest .card",
+            hx_swap="outerHTML",
+            cls="mt-2 text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700 focus:outline-none dark:focus:ring-red-800"
+        ),
+        cls="card block max-w-sm p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 text-gray-700",
     )
+
+
+@app.delete("/delete-svi/{id}/{vrf_name}")
+def delete_svi(id: int, vrf_name: str):
+    # Read the existing YAML file
+    with open("TENANTS.yaml", "r") as f:
+        tenants_data = yaml.safe_load(f)
+
+    # Remove the SVI entry from the specified VRF
+    for tenant in tenants_data["tenants"]:
+        for vrf in tenant.get("vrfs", []):
+            if vrf["name"] == vrf_name:
+                # Remove the SVI with the matching ID
+                vrf["svis"] = [svi for svi in vrf.get("svis", []) if svi["id"] != id]
+                break
+
+    # Write updated YAML file
+    with open("TENANTS.yaml", "w") as f:
+        yaml.dump(tenants_data, f, default_flow_style=False)
+
+    # Return an empty response to indicate successful deletion
+    return ""
 
 
 serve()
