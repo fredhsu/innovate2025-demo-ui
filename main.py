@@ -176,7 +176,11 @@ def yaml_form():
         ),
         cls=("space-y-4 bg-white p-6 rounded-lg shadow",),
     )
-    svis = tenants_data.get("tenants")[0].get("vrfs")[0].get("svis")
+    first_vrf = tenants_data.get("tenants")[0].get("vrfs")[0]
+    svis = first_vrf.get("svis")
+    vrf_name = first_vrf.get("name", "VRF-A")
+    for svi in svis:
+        svi['vrf_name'] = vrf_name
 
     content = Div(
         *[
@@ -187,6 +191,7 @@ def yaml_form():
                     Span("IP: ", cls="font-bold"),
                     Span(str(svi.get("ip_address_virtual"))),
                 ),
+                Div(Span("VRF: ", cls="font-bold"), Span(str(svi.get('vrf_name', 'VRF-A')))),
                 Button(
                     "Delete", 
                     hx_delete=f"/delete-svi/{svi.get('id')}/{svi.get('vrf_name', 'VRF-A')}", 
@@ -257,6 +262,7 @@ def save_svi_yaml(entry: SVIEntry):
             Span("IP: ", cls="font-bold"),
             Span(entry.ip_address_virtual),
         ),
+        Div(Span("VRF: ", cls="font-bold"), Span(entry.vrf_name)),
         Button(
             "Delete", 
             hx_delete=f"/delete-svi/{entry.id}/{entry.vrf_name}", 
