@@ -187,6 +187,14 @@ def yaml_form():
         ),
         cls=("space-y-4 bg-white p-6 rounded-lg shadow",),
     )
+    # Extract all unique VRF names
+    vrf_names = [
+        vrf["name"]
+        for tenant in tenants_data.get("tenants", [])
+        for vrf in tenant.get("vrfs", [])
+    ]
+
+    # Get SVIs from the first VRF initially
     first_vrf = tenants_data.get("tenants")[0].get("vrfs")[0]
     svis = first_vrf.get("svis")
     vrf_name = first_vrf.get("name", "VRF-A")
@@ -220,11 +228,29 @@ def yaml_form():
         id="svi-list",
         cls="grid sm:grid-cols-2 auto-rows-fr gap-3 w-full",
     )
+    # Add VRF filter dropdown
+    vrf_filter = Div(
+        Label(
+            "Filter by VRF:",
+            Select(
+                *[Option(vrf, value=vrf) for vrf in vrf_names],
+                name="vrf_filter",
+                id="vrf-filter-select",
+                hx_get="/filter-svis",
+                hx_target="#svi-list",
+                cls="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5",
+            ),
+            cls="block mb-2 text-sm font-medium text-gray-900",
+        ),
+        cls="mb-4",
+    )
+
     show = Div(
         H1(
             "SVI List",
             cls="text-4xl tracking-tighter font-semibold mt-10 text-center",
         ),
+        vrf_filter,
         content,
         cls="container max-w-4xl flex flex-col gap-4 items-center",
     )
@@ -308,6 +334,54 @@ def delete_svi(id: int, vrf_name: str):
 
     # Return an empty response to indicate successful deletion
     return ""
+
+
+@app.get("/filter-svis")
+def filter_svis(vrf_filter: str = "VRF-A"):
+    # Read the existing YAML file
+    with open("TENANTS.yaml", "r") as f:
+        tenants_data = yaml.safe_load(f)
+
+    # Find SVIs for the selected VRF
+    filtered_svis = []
+    for tenant in tenants_data.get("tenants", []):
+        for vrf in tenant.get("vrfs", []):
+            if vrf["name"] == vrf_filter:
+                filtered_svis = vrf.get("svis", [])
+                break
+
+    # Add VRF name to each SVI
+    for svi in filtered_svis:
+        svi["vrf_name"] = vrf_filter
+
+    # Return HTML fragment with filtered SVIs
+    return Div(
+        *[
+            Card(
+                Div(Span("VLAN ID: ", cls="font-bold"), Span(str(svi.get("id")))),
+                Div(Span("Name: ", cls="font-bold"), Span(str(svi.get("name")))),
+                Div(
+                    Span("IP: ", cls="font-bold"),
+                    Span(str(svi.get("ip_address_virtual"))),
+                ),
+                Div(
+                    Span("VRF: ", cls="font-bold"),
+                    Span(str(svi.get("vrf_name", "VRF-A"))),
+                ),
+                Button(
+                    "Delete",
+                    hx_delete=f"/delete-svi/{svi.get('id')}/{svi.get('vrf_name', 'VRF-A')}",
+                    hx_target="closest .card",
+                    hx_swap="outerHTML",
+                    cls="mt-2 text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700 focus:outline-none dark:focus:ring-red-800",
+                ),
+                cls="card block max-w-sm p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 text-gray-700",
+            )
+            for svi in filtered_svis
+        ],
+        id="svi-list",
+        cls="grid sm:grid-cols-2 auto-rows-fr gap-3 w-full",
+    )
 
 
 app.static_route("/css", static_path="./css")
