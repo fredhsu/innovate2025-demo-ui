@@ -226,7 +226,7 @@ def yaml_form():
             for svi in svis
         ],
         id="svi-list",
-        cls="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full justify-center",
+        cls="grid grid-cols-2 gap-6 w-full justify-center max-w-4xl mx-auto",
     )
     # Add VRF filter dropdown
     vrf_filter = Div(
@@ -380,7 +380,7 @@ def filter_svis(vrf_filter: str = "VRF-A"):
             for svi in filtered_svis
         ],
         id="svi-list",
-        cls="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full justify-center",
+        cls="grid grid-cols-2 gap-6 w-full justify-center max-w-4xl mx-auto",
     )
 
 
