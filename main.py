@@ -1,6 +1,6 @@
-# from shad4fast import *
-# from lucide_fasthtml import Lucide
 from fasthtml.common import (
+    NotStr,
+    to_xml,
     FastHTML,
     serve,
     Card,
@@ -27,9 +27,6 @@ import yaml
 from dataclasses import dataclass
 
 
-# app = FastHTML(pico=False, hdrs=(ShadHead(theme_handle=True, tw_cdn=True),))
-# app = FastHTML(pico=True)
-# app = FastHTML(pico=False, hdrs=(ShadHead(tw_cdn=True),))
 app = FastHTML(
     hdrs=(
         Link(href="/css/output.css", rel="stylesheet"),
@@ -45,6 +42,19 @@ app = FastHTML(
             rel="stylesheet",
             href="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.css",
         ),
+        # Script(
+        #     """
+        # import {
+        #     Card,
+        #     CardContent,
+        #     CardDescription,
+        #     CardFooter,
+        #     CardHeader,
+        #     CardTitle,
+        # } from "@/components/ui/card"
+        # """,
+        #     type="module",
+        # ),
     ),
     pico=False,
 )
@@ -77,14 +87,14 @@ def svd_id_input(id=None, **kwargs):
         Label(
             "SVI ID:",
             htmlFor=id,
-            cls="block mb-2 text-sm font-medium text-gray-900",
+            cls="block mb-2 font-medium text-gray-900",
         ),
         Input(
             name="id",
             placeholder="SVI ID",
             required=True,
             id=id,
-            cls="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5",
+            cls="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5",
         ),
         # cls="space-y-1",
         id="svi_id_block",
@@ -97,14 +107,14 @@ def svd_name_input(id=None, **kwargs):
         Label(
             "SVI Name:",
             htmlFor=id,
-            cls="block mb-2 text-sm font-medium text-gray-900",
+            cls="block mb-2 font-medium text-gray-900",
         ),
         Input(
             name="name",
             placeholder="name",
             required=True,
             id=id,
-            cls="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5",
+            cls="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5",
         ),
         # cls="space-y-1",
         id="svi_name_block",
@@ -117,14 +127,14 @@ def ip_address_virtual_input(id=None, **kwargs):
         Label(
             "IP Address Virtual:",
             htmlFor=id,
-            cls="block mb-2 text-sm font-medium text-gray-900",
+            cls="block mb-2 font-medium text-gray-900",
         ),
         Input(
             name="ip_address_virtual",
             placeholder="1.1.1.1/24",
             required=True,
             id=id,
-            cls="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5",
+            cls="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5",
         ),
         # cls="space-y-1",
         id="ip_address_virtual_block",
@@ -143,7 +153,7 @@ def vrf_input(vrf_names, **kw):
                 name="vrf_name",
                 id="vrf-select",
                 default_value=vrf_names[0],
-                cls="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5",
+                cls="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5",
             ),
         ),
         id="vrf-input-block",
@@ -153,7 +163,24 @@ def vrf_input(vrf_names, **kw):
 
 @app.get("/test")
 def test():
-    return Title("Test"), Body(H1("Test"), Card("Hello world"))
+    return Title("Test"), Body(
+        H1("Test"),
+        NotStr("""
+
+    <Card>
+    <CardHeader>
+        <CardTitle>Card Title</CardTitle>
+        <CardDescription>Card Description</CardDescription>
+    </CardHeader>
+    <CardContent>
+        <p>Card Content</p>
+    </CardContent>
+    <CardFooter>
+        <p>Card Footer</p>
+    </CardFooter>
+    </Card>
+    """),
+    )
 
 
 @app.get("/yaml-form")
@@ -181,11 +208,11 @@ def yaml_form():
                 hx_post="/save-svi-yaml",
                 hx_target="#svi-list",
                 hx_swap="beforeend",
-                cls="my-2 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800",
+                cls="my-2 text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800",
             ),
             cls="max-w-sm mx-auto",
         ),
-        cls=("space-y-4 bg-white p-6 rounded-lg shadow",),
+        cls=("text-lg space-y-4 bg-white p-6 rounded-lg shadow",),
     )
     # Extract all unique VRF names
     vrf_names = [
@@ -204,8 +231,8 @@ def yaml_form():
     content = Div(
         *[
             Card(
+                Div(H5(svi.get("name"), cls="text-xl font-bold text-gray-900")),
                 Div(Span("VLAN ID: ", cls="font-bold"), Span(str(svi.get("id")))),
-                Div(Span("Name: ", cls="font-bold"), Span(str(svi.get("name")))),
                 Div(
                     Span("IP: ", cls="font-bold"),
                     Span(str(svi.get("ip_address_virtual"))),
@@ -219,9 +246,9 @@ def yaml_form():
                     hx_delete=f"/delete-svi/{svi.get('id')}/{svi.get('vrf_name', 'VRF-A')}",
                     hx_target="closest .card",
                     hx_swap="outerHTML",
-                    cls="mt-2 text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700 focus:outline-none dark:focus:ring-red-800",
+                    cls="mt-2 text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg px-5 py-2.5 me-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700 focus:outline-none dark:focus:ring-red-800",
                 ),
-                cls="card flex flex-col h-full w-80 p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 text-gray-700",
+                cls="card text-lg flex flex-col h-full w-80 p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 text-gray-700",
             )
             for svi in svis
         ],
@@ -238,9 +265,10 @@ def yaml_form():
                 id="vrf-filter-select",
                 hx_get="/filter-svis",
                 hx_target="#svi-list",
-                cls="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5",
+                hx_swap="outerHTML",
+                cls="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5",
             ),
-            cls="block mb-2 text-sm font-medium text-gray-900",
+            cls="block mb-2 text-xl font-medium text-gray-900",
         ),
         cls="mb-4",
     )
@@ -248,16 +276,16 @@ def yaml_form():
     show = Div(
         H1(
             "SVI List",
-            cls="text-4xl tracking-tighter font-semibold mt-10 text-center",
+            cls="text-5xl font-extrabold dark:text-white",
         ),
         vrf_filter,
         content,
         cls="container max-w-4xl flex flex-col gap-4 items-center",
     )
-    return Title("Innovate 2025 Demo"), Body(
+    return Title("Arista Innovate 2024 AVD Demo"), Body(
         H1(
-            "Innovate 2025 Demo",
-            cls="text-4xl tracking-tighter font-semibold mt-10 text-center",
+            "Arista Innovate 2024 AVD Demo",
+            cls="mb-4 text-4xl font-extrabold leading-none tracking-tight text-gray-900 md:text-5xl lg:text-6xl dark:text-white",
         ),
         Section(
             add,
@@ -297,7 +325,6 @@ def save_svi_yaml(entry: SVIEntry):
     # Return an HTML fragment for HTMX to insert
     return Card(
         Div(Span("VLAN ID: ", cls="font-bold"), Span(str(entry.id))),
-        Div(Span("Name: ", cls="font-bold"), Span(entry.name)),
         Div(
             Span("IP: ", cls="font-bold"),
             Span(entry.ip_address_virtual),
@@ -358,8 +385,8 @@ def filter_svis(vrf_filter: str = "VRF-A"):
     return Div(
         *[
             Card(
+                Div(H5(svi.get("name"), cls="text-xl font-bold text-gray-900")),
                 Div(Span("VLAN ID: ", cls="font-bold"), Span(str(svi.get("id")))),
-                Div(Span("Name: ", cls="font-bold"), Span(str(svi.get("name")))),
                 Div(
                     Span("IP: ", cls="font-bold"),
                     Span(str(svi.get("ip_address_virtual"))),
@@ -380,9 +407,10 @@ def filter_svis(vrf_filter: str = "VRF-A"):
             for svi in filtered_svis
         ],
         id="svi-list",
-        cls="grid grid-cols-2 gap-6 w-full justify-center max-w-4xl mx-auto",
+        cls="grid text-lg grid-cols-2 gap-6 w-full justify-center max-w-4xl mx-auto",
     )
 
 
 app.static_route("/css", static_path="./css")
+app.static_route("/images", static_path="./images")
 serve()
