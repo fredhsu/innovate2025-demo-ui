@@ -77,6 +77,7 @@ class SVIEntry:
     id: str
     name: str
     ip_address_virtual: str
+    ticket_id: str
     tags: str = ""
     vrf_name: str = ""
     enabled: bool = True
@@ -118,6 +119,24 @@ def svd_name_input(id=None, **kwargs):
         ),
         # cls="space-y-1",
         id="svi_name_block",
+        **kwargs,
+    )
+
+def ticket_id_input(id=None, **kwargs):
+    return Div(
+        Label(
+            "Ticket ID:",
+            htmlFor=id,
+            cls="block mb-2 font-medium text-gray-900",
+        ),
+        Input(
+            name="ticket_id",
+            placeholder="Ticket ID",
+            required=True,
+            id=id,
+            cls="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5",
+        ),
+        id="ticket_id_block",
         **kwargs,
     )
 
@@ -201,6 +220,7 @@ def yaml_form():
             svd_id_input(id="new-svi-id"),
             ip_address_virtual_input(id="new-ip-address-virtual"),
             svd_name_input(id="new-svi-name"),
+            ticket_id_input(id="new-ticket-id"),
             vrf_input(vrf_names=vrf_names),
             Button(
                 "Add",
@@ -301,6 +321,9 @@ def save_svi_yaml(entry: SVIEntry):
     # Read the existing YAML file
     with open("TENANTS.yaml", "r") as f:
         tenants_data = yaml.safe_load(f)
+
+    # Print the ticket ID (but do not save it)
+    print(f"Ticket ID for this SVI: {entry.ticket_id}")
 
     # Prepare the new SVI entry
     new_svi = {
