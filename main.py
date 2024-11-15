@@ -180,6 +180,36 @@ def vrf_input(vrf_names, **kw):
         **kw,
     )
 
+def svi_card(svi, vrf_name=None):
+    """
+    Generate a card for an SVI entry
+    
+    :param svi: Dictionary containing SVI details
+    :param vrf_name: Optional VRF name, defaults to 'VRF-A' if not provided
+    :return: Card component for the SVI
+    """
+    vrf_name = vrf_name or svi.get('vrf_name', 'VRF-A')
+    return Card(
+        Div(H5(svi.get("name"), cls="text-xl font-bold text-gray-900")),
+        Div(Span("VLAN ID: ", cls="font-bold"), Span(str(svi.get("id")))),
+        Div(
+            Span("IP: ", cls="font-bold"),
+            Span(str(svi.get("ip_address_virtual"))),
+        ),
+        Div(
+            Span("VRF: ", cls="font-bold"),
+            Span(str(vrf_name)),
+        ),
+        Button(
+            "Delete",
+            hx_delete=f"/delete-svi/{svi.get('id')}/{vrf_name}",
+            hx_target="closest .card",
+            hx_swap="outerHTML",
+            cls="mt-2 text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg px-5 py-2.5 me-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700 focus:outline-none dark:focus:ring-red-800",
+        ),
+        cls="card text-lg flex flex-col h-full w-80 p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 text-gray-700",
+    )
+
 
 @app.get("/test")
 def test():
@@ -250,29 +280,7 @@ def yaml_form():
         svi["vrf_name"] = vrf_name
 
     content = Div(
-        *[
-            Card(
-                Div(H5(svi.get("name"), cls="text-xl font-bold text-gray-900")),
-                Div(Span("VLAN ID: ", cls="font-bold"), Span(str(svi.get("id")))),
-                Div(
-                    Span("IP: ", cls="font-bold"),
-                    Span(str(svi.get("ip_address_virtual"))),
-                ),
-                Div(
-                    Span("VRF: ", cls="font-bold"),
-                    Span(str(svi.get("vrf_name", "VRF-A"))),
-                ),
-                Button(
-                    "Delete",
-                    hx_delete=f"/delete-svi/{svi.get('id')}/{svi.get('vrf_name', 'VRF-A')}",
-                    hx_target="closest .card",
-                    hx_swap="outerHTML",
-                    cls="mt-2 text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg px-5 py-2.5 me-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700 focus:outline-none dark:focus:ring-red-800",
-                ),
-                cls="card text-lg flex flex-col h-full w-80 p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 text-gray-700",
-            )
-            for svi in svis
-        ],
+        *[svi_card(svi) for svi in svis],
         id="svi-list",
         cls="grid grid-cols-2 gap-6 w-full justify-center max-w-4xl mx-auto",
     )
@@ -347,23 +355,11 @@ def save_svi_yaml(entry: SVIEntry):
         yaml.dump(tenants_data, f, default_flow_style=False)
 
     # Return an HTML fragment for HTMX to insert
-    return Card(
-        Div(H5(new_svi.get("name"), cls="text-xl font-bold text-gray-900")),
-        Div(Span("VLAN ID: ", cls="font-bold"), Span(str(entry.id))),
-        Div(
-            Span("IP: ", cls="font-bold"),
-            Span(entry.ip_address_virtual),
-        ),
-        Div(Span("VRF: ", cls="font-bold"), Span(entry.vrf_name)),
-        Button(
-            "Delete",
-            hx_delete=f"/delete-svi/{entry.id}/{entry.vrf_name}",
-            hx_target="closest .card",
-            hx_swap="outerHTML",
-            cls="mt-2 text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700 focus:outline-none dark:focus:ring-red-800",
-        ),
-        cls="card flex flex-col h-full w-80 p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 text-gray-700",
-    )
+    return svi_card({
+        "name": new_svi.get("name"),
+        "id": entry.id,
+        "ip_address_virtual": entry.ip_address_virtual
+    }, entry.vrf_name)
 
 
 @app.delete("/delete-svi/{id}/{vrf_name}")
@@ -408,29 +404,7 @@ def filter_svis(vrf_filter: str = "VRF-A"):
 
     # Return HTML fragment with filtered SVIs
     return Div(
-        *[
-            Card(
-                Div(H5(svi.get("name"), cls="text-xl font-bold text-gray-900")),
-                Div(Span("VLAN ID: ", cls="font-bold"), Span(str(svi.get("id")))),
-                Div(
-                    Span("IP: ", cls="font-bold"),
-                    Span(str(svi.get("ip_address_virtual"))),
-                ),
-                Div(
-                    Span("VRF: ", cls="font-bold"),
-                    Span(str(svi.get("vrf_name", "VRF-A"))),
-                ),
-                Button(
-                    "Delete",
-                    hx_delete=f"/delete-svi/{svi.get('id')}/{svi.get('vrf_name', 'VRF-A')}",
-                    hx_target="closest .card",
-                    hx_swap="outerHTML",
-                    cls="mt-2 text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700 focus:outline-none dark:focus:ring-red-800",
-                ),
-                cls="card flex flex-col h-full w-80 p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 text-gray-700",
-            )
-            for svi in filtered_svis
-        ],
+        *[svi_card(svi) for svi in filtered_svis],
         id="svi-list",
         cls="grid text-lg grid-cols-2 gap-6 w-full justify-center max-w-4xl mx-auto",
     )
