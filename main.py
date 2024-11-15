@@ -122,6 +122,7 @@ def svd_name_input(id=None, **kwargs):
         **kwargs,
     )
 
+
 def ticket_id_input(id=None, **kwargs):
     return Div(
         Label(
@@ -347,6 +348,7 @@ def save_svi_yaml(entry: SVIEntry):
 
     # Return an HTML fragment for HTMX to insert
     return Card(
+        Div(H5(new_svi.get("name"), cls="text-xl font-bold text-gray-900")),
         Div(Span("VLAN ID: ", cls="font-bold"), Span(str(entry.id))),
         Div(
             Span("IP: ", cls="font-bold"),
@@ -360,7 +362,7 @@ def save_svi_yaml(entry: SVIEntry):
             hx_swap="outerHTML",
             cls="mt-2 text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700 focus:outline-none dark:focus:ring-red-800",
         ),
-        cls="card block max-w-sm p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 text-gray-700",
+        cls="card flex flex-col h-full w-80 p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 text-gray-700",
     )
 
 
